@@ -226,9 +226,15 @@ def rings_fields_menu():
 
         for row in range(size + 1):
             values = []
+
             for col in range(size + 1):
                 if multiplicative:
-                    values.append(str((row * col) % n))
+                    val = (row * col) % n
+
+                    if val == 1 and row != 0 and col != 0:
+                        values.append("[green]1[/green]")
+                    else:
+                        values.append(str(val))
                 else:
                     values.append(str((row + col) % n))
 
