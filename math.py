@@ -83,23 +83,27 @@ def menu():
         elif key == readchar.key.CTRL_C:
             exit_gracefully()
 
-def extended_euclidean(a, b):
-    rows = []
+def build_eea_columns(a, b):
+    r = [a, b]
+    x = [1, 0]
+    y = [0, 1]
+    q = ["", ""]  # placeholders for r0, r1 columns
 
-    r_prev, r = a, b
-    s_prev, s = 1, 0
-    t_prev, t = 0, 1
+    while True:
+        if r[-1] == 0:
+            break
 
-    while r != 0:
-        q = r_prev // r
+        qi = r[-2] // r[-1]
+        q.append(qi)
 
-        rows.append([q, r_prev, r, s_prev, s, t_prev, t])
+        r.append(r[-2] - qi * r[-1])
+        x.append(x[-2] - qi * x[-1])
+        y.append(y[-2] - qi * y[-1])
 
-        r_prev, r = r, r_prev - q * r
-        s_prev, s = s, s_prev - q * s
-        t_prev, t = t, t_prev - q * t
+        if r[-1] == 0:
+            break
 
-    return rows, r_prev, s_prev, t_prev
+    return q, r, x, y
 
 
 def eea_menu():
@@ -107,43 +111,37 @@ def eea_menu():
         clear()
         title()
 
-        console.print("[bold]Enter space-separated integers for the EEA.[/bold]")
-        console.print("Example: 252 198\n")
+        console.print("[bold]Enter two integers:[/bold]")
+        console.print("Example: 377 3434\n")
 
-        values = input("> ").strip().split()
+        a, b = map(int, input("> ").split())
 
-        if len(values) != 2:
-            console.print("\n[red]Currently expects exactly two numbers.[/red]")
-            input("\nPress Enter...")
-            return
+        q, r, x, y = build_eea_columns(a, b)
 
-        a, b = map(int, values)
-
-        rows, gcd_value, x, y = extended_euclidean(a, b)
+        cols = len(q)
 
         table = Table(
             title=f"Extended Euclidean Algorithm ({a}, {b})",
-            show_header=True,
+            show_header=False,
             box=box.SQUARE,
+            pad_edge=False,
         )
 
-        table.add_column("q", justify="right")
-        table.add_column("rₙ₋₁", justify="right")
-        table.add_column("rₙ", justify="right")
-        table.add_column("sₙ₋₁", justify="right")
-        table.add_column("sₙ", justify="right")
-        table.add_column("tₙ₋₁", justify="right")
-        table.add_column("tₙ", justify="right")
+        for _ in range(cols):
+            table.add_column(justify="center")
 
-        for row in rows:
-            table.add_row(*map(str, row))
+        table.add_row("qᵢ", *map(str, q))
+        table.add_row("rᵢ", *map(str, r))
+        table.add_row("xᵢ", *map(str, x))
+        table.add_row("yᵢ", *map(str, y))
 
         console.print()
         console.print(table)
 
-        console.print()
-        console.print(f"[bold green]gcd({a}, {b}) = {gcd_value}[/bold green]")
-        console.print(f"[bold cyan]{x}·{a} + {y}·{b} = {gcd_value}[/bold cyan]")
+        # final Bézout identity
+        g = r[-2] if r[-1] == 0 else r[-1]
+        console.print(f"\n[bold green]gcd = {g}[/bold green]")
+        console.print(f"[cyan]{x[-2]}·{a} + {y[-2]}·{b} = {g}[/cyan]")
 
         input("\nPress Enter...")
 
