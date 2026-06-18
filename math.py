@@ -227,18 +227,31 @@ def rings_fields_menu():
         for row in range(size + 1):
             values = []
 
-            for col in range(size + 1):
-                if multiplicative:
-                    val = (row * col) % n
+            row_vals = []
+            has_one = False
 
+            for col in range(size + 1):
+                val = (row * col) % n if multiplicative else (row + col) % n
+                row_vals.append(val)
+
+                if multiplicative and val == 1 and row != 0 and col != 0:
+                    has_one = True
+
+            if multiplicative and row != 0 and has_one:
+                first_col = f"[green]{row}[/green]"
+            else:
+                first_col = str(row)
+
+            for col, val in enumerate(row_vals):
+                if multiplicative:
                     if val == 1 and row != 0 and col != 0:
                         values.append("[green]1[/green]")
                     else:
                         values.append(str(val))
                 else:
-                    values.append(str((row + col) % n))
+                    values.append(str(val))
 
-            table.add_row(str(row), *values)
+            table.add_row(first_col, *values)
 
         clear()
         title()
