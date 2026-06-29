@@ -2,6 +2,7 @@
 
 from math import gcd
 import sys
+import argparse
 
 import readchar
 from pyfiglet import Figlet
@@ -9,6 +10,7 @@ from pyfiglet import Figlet
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table, box
+from math import gcd
 
 console = Console()
 
@@ -16,6 +18,7 @@ MENU_ITEMS = [
     "Extended Euclidean Algorithm",
     "Bezout Coefficient table",
     "Rings and Fields Tables",
+    "Z* Sets",
     "Exit",
 ]
 
@@ -105,6 +108,93 @@ def build_eea_columns(a, b):
 
     return q, r, x, y
 
+def z_sets_menu():
+    try:
+        clear()
+        title()
+
+        console.print("[bold]Enter two values n1 n2:[/bold]")
+        console.print("Example: 16 20\n")
+
+        n1, n2 = map(int, input("> ").split())
+
+        from math import gcd
+
+        left = Table(title=f"ℤ*{n1} (gcd)")
+        left.add_column("x", justify="right")
+        left.add_column(f"gcd(x,{n1})", justify="right")
+
+        right = Table(title=f"ℤ*{n2} (gcd)")
+        right.add_column("x", justify="right")
+        right.add_column(f"gcd(x,{n2})", justify="right")
+
+        rows = max(n1 - 1, n2 - 1)
+
+        coprime_both = []
+
+        for i in range(1, rows + 1):
+
+            # left table
+            if i < n1:
+                g1 = gcd(i, n1)
+                left.add_row(str(i), str(g1))
+            else:
+                left.add_row("", "")
+
+            # right table
+            if i < n2:
+                g2 = gcd(i, n2)
+                right.add_row(str(i), str(g2))
+            else:
+                right.add_row("", "")
+
+            # intersection condition
+            if i < n1 and i < n2:
+                if gcd(i, n1) == 1 and gcd(i, n2) == 1:
+                    coprime_both.append(i)
+
+        clear()
+        title()
+
+        from rich.columns import Columns
+        console.print(Columns([left, right], equal=True))
+
+        console.print("\n[bold cyan]Common coprime elements:[/bold cyan]")
+        console.print(coprime_both)
+
+        input("\nPress Enter...")
+
+    except KeyboardInterrupt:
+        exit_gracefully()
+        
+def display_eea_table(a, b):
+    """Helper function to calculate and render the EEA table cleanly."""
+    q, r, x, y = build_eea_columns(a, b)
+    cols = len(q)
+
+    table = Table(
+        title=f"Extended Euclidean Algorithm ({a}, {b})",
+        show_header=False,
+        box=box.SQUARE,
+        pad_edge=False,
+    )
+
+    for _ in range(cols):
+        table.add_column(justify="center")
+
+    table.add_row("qᵢ", *map(str, q))
+    table.add_row("rᵢ", *map(str, r))
+    table.add_row("xᵢ", *map(str, x))
+    table.add_row("yᵢ", *map(str, y))
+
+    console.print()
+    console.print(table)
+
+    # final Bézout identity
+    g = r[-2] if r[-1] == 0 else r[-1]
+    console.print(f"\n[bold green]gcd = {g}[/bold green]")
+    console.print(f"[cyan]{x[-2]}·{a} + {y[-2]}·{b} = {g}[/cyan]")
+
 
 def eea_menu():
     try:
@@ -115,33 +205,7 @@ def eea_menu():
         console.print("Example: 377 3434\n")
 
         a, b = map(int, input("> ").split())
-
-        q, r, x, y = build_eea_columns(a, b)
-
-        cols = len(q)
-
-        table = Table(
-            title=f"Extended Euclidean Algorithm ({a}, {b})",
-            show_header=False,
-            box=box.SQUARE,
-            pad_edge=False,
-        )
-
-        for _ in range(cols):
-            table.add_column(justify="center")
-
-        table.add_row("qᵢ", *map(str, q))
-        table.add_row("rᵢ", *map(str, r))
-        table.add_row("xᵢ", *map(str, x))
-        table.add_row("yᵢ", *map(str, y))
-
-        console.print()
-        console.print(table)
-
-        # final Bézout identity
-        g = r[-2] if r[-1] == 0 else r[-1]
-        console.print(f"\n[bold green]gcd = {g}[/bold green]")
-        console.print(f"[cyan]{x[-2]}·{a} + {y[-2]}·{b} = {g}[/cyan]")
+        display_eea_table(a, b)
 
         input("\nPress Enter...")
 
@@ -261,6 +325,27 @@ def rings_fields_menu():
         exit_gracefully()
 
 def main():
+    # Setup CLI argument options
+    parser = argparse.ArgumentParser(description="Math utilities shortcut.")
+    parser.add_argument(
+        "-e", 
+        nargs=2, 
+        type=int, 
+        metavar=("NUM1", "NUM2"), 
+        help="Directly run Extended Euclidean Algorithm with two numbers"
+    )
+    
+    args = parser.parse_args()
+
+    # If the shortcut flag is provided, execute it immediately and bypass menu loop
+    if args.e:
+        try:
+            display_eea_table(args.e[0], args.e[1])
+        except Exception as e:
+            console.print(f"[bold red]Error:[/bold red] {e}")
+        return
+
+    # Normal menu loop
     try:
         while True:
             choice = menu()
@@ -275,6 +360,9 @@ def main():
                 rings_fields_menu()
 
             elif choice == 3:
+                z_sets_menu()
+
+            elif choice == 4:
                 break
 
     except KeyboardInterrupt:
